@@ -211,18 +211,18 @@ class CliDumperTest extends TestCase
 
     public function testSourceContentOnLastLineWhenOutputGreaterThanDisplayHeight()
     {
+        putenv('LINES=10');
+
         $output = new BufferedOutput();
-        $mock = m::mock(CliDumper::class.'[getDisplayHeight]', [
+        $dumper = new CliDumper(
             $output,
             '/my-work-directory',
-            '/my-work-directory/storage/framework/views',
-        ])->shouldAllowMockingProtectedMethods()
-            ->shouldReceive('getDisplayHeight')->andReturn(5)
-            ->getMock();
+            '/my-work-directory/storage/framework/views'
+        );
 
         $cloner = tap(new VarCloner())->addCasters(ReflectionCaster::UNSET_CLOSURE_FILE_INFO);
 
-        $mock->dumpWithSource($cloner->cloneVar(['string', 1, 1.1, ['string', 1, 1.1]]));
+        $dumper->dumpWithSource($cloner->cloneVar(['string', 1, 1.1, ['string', 1, 1.1]]));
 
         $output = $output->fetch();
 
@@ -237,6 +237,40 @@ class CliDumperTest extends TestCase
             2 => 1.1
           ]
         ] // app/routes/console.php:18
+
+        EOF;
+
+        $this->assertSame($expected, $output);
+    }
+
+    public function testSourceContentIsNotOnLastLineWhenOutputIsSmallerThanDisplayHeight()
+    {
+        putenv('LINES=50');
+
+        $output = new BufferedOutput();
+        $dumper = new CliDumper(
+            $output,
+            '/my-work-directory',
+            '/my-work-directory/storage/framework/views'
+        );
+
+        $cloner = tap(new VarCloner())->addCasters(ReflectionCaster::UNSET_CLOSURE_FILE_INFO);
+
+        $dumper->dumpWithSource($cloner->cloneVar(['string', 1, 1.1, ['string', 1, 1.1]]));
+
+        $output = $output->fetch();
+
+        $expected = <<<'EOF'
+        array:4 [ // app/routes/console.php:18
+          0 => "string"
+          1 => 1
+          2 => 1.1
+          3 => array:3 [
+            0 => "string"
+            1 => 1
+            2 => 1.1
+          ]
+        ]
 
         EOF;
 
