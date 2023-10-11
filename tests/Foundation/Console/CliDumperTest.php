@@ -3,7 +3,6 @@
 namespace Illuminate\Tests\Foundation\Console;
 
 use Illuminate\Foundation\Console\CliDumper;
-use Mockery as m;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use stdClass;
